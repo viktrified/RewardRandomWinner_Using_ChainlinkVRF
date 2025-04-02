@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.7;
 
-import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
-import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
-import "@chainlink/contracts/src/v0.8/AutomationCompatible.sol";
+import "../lib/chainlink/contracts/src/v0.8/vrf/interfaces/VRFCoordinatorV2Interface.sol";
+import "../lib/chainlink/contracts/src/v0.8/vrf/VRFConsumerBaseV2.sol";
+import "../lib/chainlink/contracts/src/v0.8/automation/interfaces/AutomationCompatibleInterface.sol";
 
 contract AutomatedLottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
-    VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
-    uint64 private immutable i_subscriptionId;
-    bytes32 private immutable i_gasLane;
-    uint32 private immutable i_callbackGasLimit;
+    VRFCoordinatorV2Interface private immutable i_vrfCoordinator = 
+        VRFCoordinatorV2Interface(0x8103B0A8A00be2DDC778e6e7eaa21791Cd364625);
+    uint64 private immutable i_subscriptionId = 4529;
+    bytes32 private immutable i_gasLane = 0x121a88b1a5ad1d8a8657a43e38c89c7b7cbec83f8fc91dd110f9fe4fc9d2f384;
+    uint32 private immutable i_callbackGasLimit = 1000000;
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private constant NUM_WORDS = 1;
 
@@ -23,17 +24,8 @@ contract AutomatedLottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
     event RequestedLotteryWinner(uint256 indexed requestId);
     event WinnerPicked(address indexed winner, uint256 amount);
 
-    constructor(
-        address vrfCoordinatorV2,
-        uint64 subscriptionId,
-        bytes32 gasLane,
-        uint32 callbackGasLimit
-    ) VRFConsumerBaseV2(vrfCoordinatorV2) {
-        i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinatorV2);
-        i_gasLane = gasLane;
-        i_subscriptionId = subscriptionId;
+    constructor() VRFConsumerBaseV2(address(i_vrfCoordinator)) {
         lastTimeStamp = block.timestamp;
-        i_callbackGasLimit = callbackGasLimit;
     }
 
     function playInLottery() public payable {
@@ -56,7 +48,7 @@ contract AutomatedLottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
         bool timePassed = ((block.timestamp - lastTimeStamp) > interval);
         bool hasPlayers = (players.length > 1);
         bool hasBalance = address(this).balance > 0;
-        upkeepNeeded = (isOpen && timePassed && hasPlayers && hasBalance);
+        upkeepNeeded = (timePassed && hasPlayers && hasBalance);
         return (upkeepNeeded, "");
     }
 
@@ -94,10 +86,6 @@ contract AutomatedLottery is VRFConsumerBaseV2, AutomationCompatibleInterface {
 
     function getEntranceFee() public view returns (uint256) {
         return entranceFee;
-    }
-
-    function setEntranceFee(uint256 _fee) public {
-        entranceFee = _fee;
     }
 
     function getRecentWinner() public view returns (address) {

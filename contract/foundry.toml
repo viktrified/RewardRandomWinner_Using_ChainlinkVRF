@@ -3,7 +3,8 @@ src = "src"
 out = "out"
 libs = ["lib"]
 
-remappings = ['@chainlink/=lib/chainlink/contracts/src/']
-
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
-
+remappings = [
+    "chainlink/=lib/chainlink/",
+    "@chainlink/=lib/chainlink/contracts/src/",
+    "@chainlink/=lib/chainlink/",
+]
